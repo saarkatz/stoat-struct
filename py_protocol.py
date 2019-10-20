@@ -43,14 +43,39 @@ class MetaProtocol(type):
         elif '_structure' not in result.__dict__:
             result._structure = result._structure.copy()
 
+        references = []
         for attribute, value in dictionary.items():
             if isinstance(value, MetaProtocol):
                 result._structure[attribute] = value
                 setattr(result, attribute, value.property(attribute))
+                # Police referenceable types so that there are no two field of
+                # the same reference
+                if value._is_referenceable():
+                    if value in references:
+                        raise Exception('')  # TODO: Make appropriate exception
+                    references.append(value)
         return result
 
     def __getitem__(cls, item):
         return cls.array(item)
+
+    def __add__(cls, parameter):
+        return cls.parametrize(parameter)
+
+    def __neg__(cls):
+        """Make a field referenceable in class definition"""
+        if cls._is_referenceable():
+            raise Exception('')  # TODO: Make appropriate exception
+
+        class Referenceable(cls):
+            @classmethod
+            def _is_referenceable(cls):
+                return True
+
+            @classmethod
+            def array(cls, size):
+                raise Exception('')  # TODO: Make appropriate exception
+        return Referenceable
 
 
 class Protocol(metaclass=MetaProtocol):
@@ -103,7 +128,7 @@ class Protocol(metaclass=MetaProtocol):
         object of this type. The updated protocol should always be returned
         to allow for protocols that are their own data"""
         if not isinstance(value, cls):
-            raise ValueError('')  # TODO: make an appropriate exception class
+            raise ValueError('')  # TODO: Make appropriate exception
         return value
 
     @staticmethod
@@ -118,23 +143,35 @@ class Protocol(metaclass=MetaProtocol):
         within another protocol as an attribute"""
         instance._data[attribute] = instance._data[attribute].set(value,
                                                                   cls=cls)
+    @classmethod
+    def _is_referenceable(cls):
+        return False
+
+    @classmethod
+    def parametrize(cls, parameter):
+        """Set a type with specific parameters"""
+        raise Exception('')  # TODO: Make appropriate exception
 
     @classmethod
     def array(cls, size):
-        """Dynamically generate and initialize an array type for the protocol"""
+        """Dynamically generate an array type for the protocol"""
         assert isinstance(size, int)
 
         class Array(Protocol):
+            @property
+            def _cls(self):
+                return cls
+
             def __init__(self, *args, **kwargs):
                 super().__init__(*args, **kwargs)
                 self.size = size
-                self.data = tuple((cls() for _ in range(size)))
+                self.data = tuple((self._cls() for _ in range(size)))
 
             def __getitem__(self, item):
                 return self.data[item].get()
 
             def __setitem__(self, key, value):
-                self.data[key].set(value, cls=cls)
+                self.data[key].set(value, cls=self._cls)
 
             def __len__(self):
                 return self.size
@@ -152,12 +189,23 @@ class Protocol(metaclass=MetaProtocol):
                 return offset
 
             def set(self, value, **kwargs):
-                data = tuple((cls().set(v, cls=cls) for v in value))
+                data = tuple((self._cls().set(v, cls=self._cls) for v in value))
                 if len(data) != len(self):
                     # TODO: make an appropriate exception class
                     raise ValueError('')
                 self.data = data
                 return self
+
+            @classmethod
+            def parametrize(cls, parameter):
+                parametrized_cls = cls._cls.fget(None).parametrize(parameter)
+
+                class Parametrized(cls):
+                    @property
+                    def _cls(self):
+                        return parametrized_cls
+                return Parametrized
+
         return Array
 
 
@@ -195,6 +243,20 @@ class BaseCType(BaseType):
         offset = super().pack_into(buffer, offset, *args, **kwargs)
         struct.pack_into(self._fmt, buffer, offset, self.data.value)
         return offset + struct.calcsize(self._fmt)
+
+    @classmethod
+    def parametrize(cls, endianness):
+        fmt = endianness + cls._fmt.fget(None)  # TODO: Problematic
+
+        class Parametrized(cls):
+            @property
+            def _fmt(self):
+                return fmt
+
+            @classmethod
+            def parametrize(cls, parameter):
+                raise Exception('')  # TODO: Make appropriate exception
+        return Parametrized
 
 
 class Char(BaseCType):
