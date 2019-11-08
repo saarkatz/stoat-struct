@@ -4,9 +4,51 @@ protocols.
 Requires python >= 3.6
 """
 import ctypes
-import struct
+import struct as Struct
 from functools import partial
 from collections import OrderedDict
+
+
+class BaseStructureException(Exception):
+    pass
+
+
+class AbstractMethodException(BaseStructureException):
+    pass  # TODO: Consider using ABC
+
+
+class StructureViolationError(BaseStructureException):
+    pass
+
+
+class StructSyntaxError(BaseStructureException):
+    pass
+
+
+def cls_property(cls, *args, **kwargs):
+    return property(
+        partial(cls._get, *args,
+                cls=cls, **kwargs) if '_get' in dir(cls) else None,
+        partial(cls._set, *args,
+                cls=cls, **kwargs) if '_set' in dir(cls) else None,
+        partial(cls._del, *args,
+                cls=cls, **kwargs) if '_del' in dir(cls) else None,
+        doc=str(cls.__doc__)
+    )
+
+
+def copy_inherited_attribute(cls, base, attr, values,
+                             copy_method=dict.copy, update_method=dict.update):
+    """
+    Sets the attribute attr in cls to a copy of the attribute in base and
+    updates it with values. If attr does not exists within base then it will
+    contain only values within cls"""
+    base_values = getattr(base, attr, None)
+    if base_values:
+        setattr(cls, attr, copy_method(base_values))
+        update_method(getattr(cls, attr), values)
+    else:
+        setattr(cls, attr, copy_method(values))
 
 
 class MetaProtocol(type):
@@ -23,138 +65,226 @@ class MetaProtocol(type):
          *  Generate a property for each such attribute that will replace
             these attributes in their place.
      *  Implement the __getitem__ builtin for array generation using square
-        brackets.  # TODO: Implement __getitem__
+        brackets.
     """
-    def property(cls, *args, **kwargs):
-        return property(
-            partial(cls._get, *args,
-                    cls=cls, **kwargs) if '_get' in dir(cls) else None,
-            partial(cls._set, *args,
-                    cls=cls, **kwargs) if '_set' in dir(cls) else None,
-            partial(cls._del, *args,
-                    cls=cls, **kwargs) if '_del' in dir(cls) else None,
-            doc=str(cls.__doc__)
-        )
-
     def __new__(mcs, name, bases, dictionary):
         result = super().__new__(mcs, name, bases, dictionary)
-        if '_structure' not in dir(result):
-            result._structure = OrderedDict()
-        elif '_structure' not in result.__dict__:
-            result._structure = result._structure.copy()
+        base = super(result, result)
 
-        references = []
+        # Inherit _structure
+        copy_inherited_attribute(result, base, '_structure',
+                                 dictionary.get('_structure', OrderedDict()),
+                                 OrderedDict.copy, OrderedDict.update)
+
+        # Inherit _struct_data
+        copy_inherited_attribute(result, base, '_struct_data',
+                                 dictionary.get('_struct_data', {}))
+
         for attribute, value in dictionary.items():
             if isinstance(value, MetaProtocol):
-                result._structure[attribute] = value
-                setattr(result, attribute, value.property(attribute))
-                # Police referenceable types so that there are no two field of
-                # the same reference
-                if value._is_referenceable():
-                    if value in references:
-                        raise Exception('')  # TODO: Make appropriate exception
-                    references.append(value)
+                value = result._structure[attribute] = value._prepare()
+                setattr(result, attribute, cls_property(value, attribute))
+
+                # Set referenceable attribute
+                if 'is_ref' in value._struct_data and \
+                        value._struct_data['is_ref']:
+                    value._set_reference(attribute)
         return result
 
     def __getitem__(cls, item):
         return cls.array(item)
 
     def __add__(cls, parameter):
-        return cls.parametrize(parameter)
+        return cls.parameterized(parameter)
 
     def __neg__(cls):
-        """Make a field referenceable in class definition"""
-        if cls._is_referenceable():
-            raise Exception('')  # TODO: Make appropriate exception
+        return cls.referenceable()
 
-        class Referenceable(cls):
-            @classmethod
-            def _is_referenceable(cls):
-                return True
-
-            @classmethod
-            def array(cls, size):
-                raise Exception('')  # TODO: Make appropriate exception
-        return Referenceable
+    def __iter__(self):
+        raise BaseStructureException("Type class can't be iterated over!")
 
 
-class Protocol(metaclass=MetaProtocol):
+class GroundStructInterface(metaclass=MetaProtocol):
     """
-    Base class for all protocols.
-    This class provides the basic logic needed for the operation of a protocol:
-     *  Initialization of the protocol data layer based on the structure
-        dictionary.
+    Base interface for all the struct classes.
+    Defines all the functions that a complete struct would need to implement
+    """
+    # INITIALIZATION
+    def __init__(self, *args, **kwargs):
+        raise AbstractMethodException('')
+
+    # COMMON METHODS
+    def calcsize(self, *args, **kwargs):
+        """Calculate the size in bytes of the data"""
+        raise AbstractMethodException('')
+
+    def pack(self, *args, **kwargs):
+        """Pack the data into a binary array"""
+        raise AbstractMethodException('')
+
+    def pack_into(self, buffer, offset, *args, **kwargs):
+        """Pack the data into a buffer starting at the specified offset"""
+        raise AbstractMethodException('')
+
+    @classmethod
+    def unpack(cls, buffer, *args, **kwargs):
+        """Instantiate the class from the supplied buffer"""
+        raise AbstractMethodException('')
+
+    @classmethod
+    def unpack_from(cls, buffer, offset, *args, **kwargs):
+        """Instantiate the class from the supplied buffer starting at offset"""
+        raise AbstractMethodException('')
+
+    # FIELD DATA GETTERS AND SETTERS
+    def get(self, **kwargs):
+        """Get the data containing object"""
+        raise AbstractMethodException('')
+
+    def set(self, value, cls, **kwargs):
+        """Set the data. This method should return the updated object"""
+        raise AbstractMethodException('')
+
+    @staticmethod
+    def _get(attribute, instance, **kwargs):
+        """Get the object from its containing type"""
+        raise AbstractMethodException('')
+
+    @staticmethod
+    def _set(attribute, instance, value, cls, **kwargs):
+        """Set the object within its containing type"""
+        raise AbstractMethodException('')
+
+    # REQUIRED CLASS METHODS
+    @classmethod
+    def _prepare(cls, *args, **kwargs):
+        """Setup the type within the structure. Returns the final class"""
+        raise AbstractMethodException('')
+
+    @classmethod
+    def _set_reference(cls, value):
+        """Set the reference of a referenceable type"""
+        raise AbstractMethodException('')
+
+    @classmethod
+    def referenceable(cls):
+        """Return a type of this class that is referencable"""
+        raise AbstractMethodException('')
+
+    @classmethod
+    def parameterized(cls, parameter):
+        """Return a type of this class with the specified parameter"""
+        raise AbstractMethodException('')
+
+    @classmethod
+    def array(cls, size):
+        """Return an array type with this class for its data"""
+        raise AbstractMethodException('')
+
+
+class BasicGeneralStructure(GroundStructInterface):
+    """
+    Implement general structure functionality.
+    Does not support arrays, references or parameterization
     """
     def __init__(self, *args, **kwargs):
-        """Initialize the data layer of the protocol"""
         self._data = OrderedDict()
-        for field, protocol in self._structure.items():
-            self._data[field] = protocol(*args, **kwargs)
+        if 'shallow' in kwargs and kwargs['shallow']:
+            return
+        for field, struct in self._structure.items():
+            self._data[field] = struct(*args, **kwargs)
+            if struct._struct_data.get('referencing', False):
+                self._data[field]._instance = self
 
     def calcsize(self, *args, **kwargs):
-        """Calculate the size of the protocols current state"""
         size = 0
         for data_field in self._data.values():
             size += data_field.calcsize(*args, **kwargs)
         return size
 
     def pack(self, *args, **kwargs):
-        """Return a binary string representation of the current state of the
-        protocol"""
         size = self.calcsize()
         binstate = bytearray(size)
         self.pack_into(binstate, 0, *args, **kwargs)
         return bytes(binstate)
 
     def pack_into(self, buffer, offset, *args, **kwargs):
-        """Fill the buffer with the data representation of the current state
-        of the protocol"""
         for data_field in self._data.values():
             offset = data_field.pack_into(buffer, offset, *args, **kwargs)
         return offset
 
-    @staticmethod
-    def unpack(data, *args, **kwargs):
-        """Instantiate the protocol from some binary data"""
-        pass
+    @classmethod
+    def unpack(cls, buffer, *args, **kwargs):
+        result, _ = cls.unpack_from(buffer, 0, *args, **kwargs)
+        return result
+
+    @classmethod
+    def unpack_from(cls, buffer, offset, *args, **kwargs):
+        result = cls(shallow=True)
+        for field, struct in result._structure.items():
+            if struct._struct_data.get('referencing', False):
+                result._data[field], offset = \
+                    struct.unpack_from(buffer, offset, *args, instance=result,
+                                       **kwargs)
+            else:
+                result._data[field], offset = \
+                    struct.unpack_from(buffer, offset, *args, **kwargs)
+
+        return result, offset
 
     def get(self, **kwargs):
-        """This method defines the way data should be received from a
-        protocol object of this type"""
         return self
 
     def set(self, value, cls, **kwargs):
-        """This method defines the way data should be set from a protocol
-        object of this type. The updated protocol should always be returned
-        to allow for protocols that are their own data"""
         if not isinstance(value, cls):
-            raise ValueError('')  # TODO: Make appropriate exception
+            raise ValueError(
+                "Can't assign data of type '{value}' to field of type "
+                "'{source}'".format(value=type(value), source=cls))
         return value
 
     @staticmethod
-    def _get(attribute, instance, cls, **kwargs):
-        """This method defines how to access this protocol object when
-        within another protocol"""
+    def _get(attribute, instance, **kwargs):
         return instance._data[attribute].get()
 
     @staticmethod
     def _set(attribute, instance, value, cls, **kwargs):
-        """This method defines the way by which this protocol is set when
-        within another protocol as an attribute"""
-        instance._data[attribute] = instance._data[attribute].set(value,
-                                                                  cls=cls)
-    @classmethod
-    def _is_referenceable(cls):
-        return False
+        instance._data[attribute] = \
+            instance._data[attribute].set(value, cls=cls)
 
     @classmethod
-    def parametrize(cls, parameter):
-        """Set a type with specific parameters"""
-        raise Exception('')  # TODO: Make appropriate exception
+    def _prepare(cls, *args, **kwargs):
+        return cls
 
+
+class Referenceable(BasicGeneralStructure):
     @classmethod
-    def array(cls, size):
-        """Dynamically generate an array type for the protocol"""
+    def referenceable(cls):
+        class Reference(cls):
+            _struct_data = {
+                'is_ref': True,
+                'reference': None,
+            }
+
+            # def __init__(self, instance, *args, **kwargs):
+            #     super().__init__(*args, **kwargs)
+            #     self.instance = instance
+
+            @classmethod
+            def _set_reference(cls, attribute):
+                if cls._struct_data.get('reference', None):
+                    raise StructureViolationError('Attempting to create two '
+                                                  'fields with the same '
+                                                  'reference!')
+                cls._struct_data['reference'] = attribute
+
+            @classmethod
+            def referenceable(cls):
+                raise StructSyntaxError("Can't make referenceable a "
+                                        "referenceable type. Use only a "
+                                        "single dash ('-')!")
+        return Reference
+
+"""
         assert isinstance(size, int)
 
         class Array(Protocol):
@@ -207,15 +337,24 @@ class Protocol(metaclass=MetaProtocol):
                 return Parametrized
 
         return Array
+"""
 
 
-class BaseType(Protocol):
+class Structure(Referenceable):
+    pass
+
+
+class BaseType(Structure):
+    _struct_data = {
+        'type': None
+    }
+
     @property
     def _type(self):
-        raise NotImplementedError('')  # TODO: Add indicative message
+        return self._struct_data['type']
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.data = self._type()
 
     def get(self, **kwargs):
@@ -227,31 +366,38 @@ class BaseType(Protocol):
 
 
 class BaseCType(BaseType):
-    @property
-    def _type(self):
-        raise NotImplementedError('')  # TODO: Add indicative message
+    _struct_data = {
+        'fmt': None
+    }
 
     @property
     def _fmt(self):
-        raise NotImplementedError('')  # TODO: Add indicative message
+        return self._struct_data['fmt']
 
     def calcsize(self, *args, **kwargs):
         size = super().calcsize(*args, **kwargs)
-        return size + struct.calcsize(self._fmt)
+        return size + Struct.calcsize(self._fmt)
 
     def pack_into(self, buffer, offset, *args, **kwargs):
         offset = super().pack_into(buffer, offset, *args, **kwargs)
-        struct.pack_into(self._fmt, buffer, offset, self.data.value)
-        return offset + struct.calcsize(self._fmt)
+        Struct.pack_into(self._fmt, buffer, offset, self.data.value)
+        return offset + Struct.calcsize(self._fmt)
+
+    @classmethod
+    def unpack_from(cls, buffer, offset, *args, **kwargs):
+        result, offset = super().unpack_from(buffer, offset, *args, **kwargs)
+        value = Struct.unpack_from(cls._struct_data['fmt'], buffer, offset)[0]
+        return (result.set(value),
+                offset + Struct.calcsize(cls._struct_data['fmt']))
 
     @classmethod
     def parametrize(cls, endianness):
-        fmt = endianness + cls._fmt.fget(None)  # TODO: Problematic
+        fmt = endianness + cls._struct_data['fmt']  # TODO: Problematic
 
         class Parametrized(cls):
-            @property
-            def _fmt(self):
-                return fmt
+            _struct_data = {
+                'fmt': fmt
+            }
 
             @classmethod
             def parametrize(cls, parameter):
@@ -260,20 +406,60 @@ class BaseCType(BaseType):
 
 
 class Char(BaseCType):
-    @property
-    def _type(self):
-        return ctypes.c_char
-
-    @property
-    def _fmt(self):
-        return 'c'
+    _struct_data = {
+        'type': ctypes.c_char,
+        'fmt': 'c'
+    }
 
 
 class Short(BaseCType):
-    @property
-    def _type(self):
-        return ctypes.c_short
+    _struct_data = {
+        'type': ctypes.c_short,
+        'fmt': 'h'
+    }
 
-    @property
-    def _fmt(self):
-        return 'h'
+
+class RefTest(Structure):
+    @classmethod
+    def array(cls, size):
+        assert issubclass(size, BaseType) and \
+               size._struct_data.get('is_ref', False)
+
+        class Test(Structure):
+            _struct_data = {
+                'referencing': True
+            }
+
+            def get_ref(self):
+                return self._instance._data[size._struct_data['reference']]
+
+            def get_ref_value(self):
+                return getattr(self._instance, size._struct_data['reference'])
+
+            def set_ref_value(self, value):
+                setattr(self._instance, size._struct_data['reference'], value)
+
+            def calcsize(self, *args, **kwargs):
+                s = super().calcsize(self, *args, **kwargs)
+                return s + size.calcsize(self.get_ref(), *args, **kwargs)
+
+            def pack_into(self, buffer, offset, *args, **kwargs):
+                offset = super().pack_into(buffer, offset, *args, **kwargs)
+                return size.pack_into(self.get_ref(), buffer, offset, *args,
+                                      **kwargs)
+
+            @classmethod
+            def unpack_from(cls, buffer, offset, *args, **kwargs):
+                result, offset = super().unpack_from(buffer, offset, *args,
+                                                     **kwargs)
+                result._instance = kwargs['instance']
+                return result, offset + size.calcsize(
+                    result.get_ref(), *args, **kwargs)
+
+            def get(self, **kwargs):
+                return self.get_ref_value()
+
+            def set(self, value, **kwargs):
+                self.set_ref_value(value)
+                return self
+        return Test
