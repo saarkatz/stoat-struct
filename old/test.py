@@ -1,4 +1,4 @@
-from py_structure import *
+from old.py_structure import *
 
 if __name__ == '__main__':
     class Test(Structure):
