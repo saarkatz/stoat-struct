@@ -25,18 +25,6 @@ class StructSyntaxError(BaseStructureException):
     pass
 
 
-def cls_property(cls, *args, **kwargs):
-    return property(
-        partial(cls._get, *args,
-                cls=cls, **kwargs) if '_get' in dir(cls) else None,
-        partial(cls._set, *args,
-                cls=cls, **kwargs) if '_set' in dir(cls) else None,
-        partial(cls._del, *args,
-                cls=cls, **kwargs) if '_del' in dir(cls) else None,
-        doc=str(cls.__doc__)
-    )
-
-
 def copy_inherited_attribute(cls, base, attr, values,
                              copy_method=dict.copy, update_method=dict.update):
     """
@@ -82,14 +70,21 @@ class MetaProtocol(type):
 
         for attribute, value in dictionary.items():
             if isinstance(value, MetaProtocol):
-                value = result._structure[attribute] = value._prepare()
-                setattr(result, attribute, cls_property(value, attribute))
+                value = result._structure[attribute] = value._prepare(attribute)
+                setattr(result, attribute, value.property(attribute))
 
-                # Set referenceable attribute
-                if 'is_ref' in value._struct_data and \
-                        value._struct_data['is_ref']:
-                    value._set_reference(attribute)
         return result
+
+    def property(cls, *args, **kwargs):
+        return property(
+            partial(cls._get, *args,
+                    cls=cls, **kwargs) if '_get' in dir(cls) else None,
+            partial(cls._set, *args,
+                    cls=cls, **kwargs) if '_set' in dir(cls) else None,
+            partial(cls._del, *args,
+                    cls=cls, **kwargs) if '_del' in dir(cls) else None,
+            doc=str(cls.__doc__)
+        )
 
     def __getitem__(cls, item):
         return cls.array(item)
@@ -157,13 +152,12 @@ class GroundStructInterface(metaclass=MetaProtocol):
 
     # REQUIRED CLASS METHODS
     @classmethod
-    def _prepare(cls, *args, **kwargs):
-        """Setup the type within the structure. Returns the final class"""
-        raise AbstractMethodException('')
-
-    @classmethod
-    def _set_reference(cls, value):
-        """Set the reference of a referenceable type"""
+    def _prepare(cls, attribute, *args, **kwargs):
+        """
+        Setup the type within the structure. Returns the final class.
+        Called when the type is about to be initialized in another
+        structure class.
+        """
         raise AbstractMethodException('')
 
     @classmethod
@@ -185,16 +179,18 @@ class GroundStructInterface(metaclass=MetaProtocol):
 class BasicGeneralStructure(GroundStructInterface):
     """
     Implement general structure functionality.
-    Does not support arrays, references or parameterization
+    Does not support arraying, referencing and parameterization.
     """
     def __init__(self, *args, **kwargs):
         self._data = OrderedDict()
-        if 'shallow' in kwargs and kwargs['shallow']:
+        self._instance = kwargs.get('_instance', None)
+        kwargs['_instance'] = self
+        if kwargs.get('shallow', False):
             return
         for field, struct in self._structure.items():
             self._data[field] = struct(*args, **kwargs)
-            if struct._struct_data.get('referencing', False):
-                self._data[field]._instance = self
+            # if struct._struct_data.get('referencing', False):
+            #     self._data[field]._instance = self
 
     def calcsize(self, *args, **kwargs):
         size = 0
@@ -220,15 +216,15 @@ class BasicGeneralStructure(GroundStructInterface):
 
     @classmethod
     def unpack_from(cls, buffer, offset, *args, **kwargs):
-        result = cls(shallow=True)
+        result = cls(shallow=True, **kwargs)
+        kwargs['_instance'] = result
         for field, struct in result._structure.items():
-            if struct._struct_data.get('referencing', False):
-                result._data[field], offset = \
-                    struct.unpack_from(buffer, offset, *args, instance=result,
-                                       **kwargs)
-            else:
-                result._data[field], offset = \
-                    struct.unpack_from(buffer, offset, *args, **kwargs)
+            # if struct._struct_data.get('referencing', False):
+            result._data[field], offset = \
+                struct.unpack_from(buffer, offset, *args, **kwargs)
+            # else:
+            #     result._data[field], offset = \
+            #         struct.unpack_from(buffer, offset, *args, **kwargs)
 
         return result, offset
 
@@ -257,6 +253,9 @@ class BasicGeneralStructure(GroundStructInterface):
 
 
 class Referenceable(BasicGeneralStructure):
+    """
+    Implements referencing functionality
+    """
     @classmethod
     def referenceable(cls):
         class Reference(cls):
@@ -265,17 +264,19 @@ class Referenceable(BasicGeneralStructure):
                 'reference': None,
             }
 
-            # def __init__(self, instance, *args, **kwargs):
-            #     super().__init__(*args, **kwargs)
-            #     self.instance = instance
+            def __init__(self, *args, _instance=None, **kwargs):
+                super().__init__(*args, **kwargs)
+                self._instance = _instance
 
             @classmethod
-            def _set_reference(cls, attribute):
-                if cls._struct_data.get('reference', None):
+            def _prepare(cls, attribute, *args, **kwargs):
+                result = super()._prepare(attribute, *args, **kwargs)
+                if result._struct_data.get('reference', None):
                     raise StructureViolationError('Attempting to create two '
                                                   'fields with the same '
                                                   'reference!')
-                cls._struct_data['reference'] = attribute
+                result._struct_data['reference'] = attribute
+                return result
 
             @classmethod
             def referenceable(cls):
@@ -452,7 +453,7 @@ class RefTest(Structure):
             def unpack_from(cls, buffer, offset, *args, **kwargs):
                 result, offset = super().unpack_from(buffer, offset, *args,
                                                      **kwargs)
-                result._instance = kwargs['instance']
+                # result._instance = kwargs['instance']
                 return result, offset + size.calcsize(
                     result.get_ref(), *args, **kwargs)
 
