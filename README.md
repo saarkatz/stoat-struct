@@ -1,4 +1,4 @@
-# py_structure
+# py-structure
 ## How to Use PyStructure
 To create a structure, simply inherit from Structure
 ```python
