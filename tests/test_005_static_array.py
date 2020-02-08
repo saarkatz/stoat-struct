@@ -1,0 +1,104 @@
+from tests import raises, run_all
+from PyStructure.Structure import Structure
+from PyStructure.CStructure import Char, Short
+
+
+def test_basic_static_array():
+    class Person(Structure):
+        name = Char[5]
+
+    p1 = Person()
+    p1.name = b'John\x00'
+    assert b'John\x00' == p1.pack()
+
+    assert not p1.name == b'John'
+    assert not p1.name == 'John\x00'
+    assert not p1.name == 5
+
+    p1.name[4] = b'!'
+    assert b'John!' == p1.pack()
+
+    p2 = Person.unpack(b'Hello')
+    assert b'l' == p2.name[3]
+    assert b'e' == p2.name[-4]
+    assert b'Hello' == p2.name
+    assert 5 == len(p2.name)
+
+    with raises(IndexError):
+        a = p2.name[5]
+
+    with raises(TypeError):
+        p2.name = b'Text'
+
+    with raises(TypeError):
+        p2.name = 'Hello'
+
+
+def test_nested_static_array():
+    class String(Structure):
+        length = Short
+        data = Char[3]
+
+    class Test(Structure):
+        messages = String[3]
+
+    test1 = Test()
+    test1.messages[0].length = 1
+    test1.messages[0].data = b'abc'
+    test1.messages[1].length = 2
+    test1.messages[1].data = b'def'
+    test1.messages[2].length = 3
+    test1.messages[2].data = b'ghi'
+    assert b'\x01\x00abc\x02\x00def\x03\x00ghi' == test1.pack()
+
+    test2 = Test.unpack(b'\x00\x01adg\x00\x02beh\x00\x03cfi')
+    assert 256 == test2.messages[0].length
+    assert b'adg' == test2.messages[0].data
+    assert 512 == test2.messages[1].length
+    assert b'beh' == test2.messages[1].data
+    assert 768 == test2.messages[2].length
+    assert b'cfi' == test2.messages[2].data
+
+
+def test_static_multidimensional_array():
+    class Test(Structure):
+        matrix = Short[2][3]
+
+    test1 = Test()
+    test1.matrix = [[1, 2, 3], [3, 4, 5]]
+    assert b'\x01\x00\x02\x00\x03\x00\x03\x00\x04\x00\x05\x00' == test1.pack()
+
+    test2 = Test.unpack(b'\x00\x01\x00\x02\x00\x03\x00\x04\x00\x08\x00\x0c')
+    assert [[256, 512, 768], [1024, 2048, 3072]] == test2.matrix
+
+
+def test_parametrized_static_array():
+    class Test(Structure):
+        s1 = Short[2] + '>'
+        s2 = Short[1][2] + '>'
+
+    test1 = Test()
+    test1.s1 = [1, 2]
+    test1.s2 = [[3, 4]]
+    assert b'\x00\x01\x00\x02\x00\x03\x00\x04' == test1.pack()
+
+    test2 = Test.unpack(b'\x01\x00\x02\x00\x03\x00\x04\x00')
+    assert 256 == test2.s1[0]
+    assert 512 == test2.s1[1]
+    assert 768 == test2.s2[0][0]
+    assert 1024 == test2.s2[0][1]
+
+
+def test_reversed_array_parametrization():
+    class Test(Structure):
+        string = (Short + '>')[3]
+
+    test = Test()
+    test.string[0] = 258
+    test.string[1] = 772
+    test.string[2] = 1286
+    assert b'\x01\x02\x03\x04\x05\x06' == test.pack()
+
+
+if __name__ == '__main__':
+    run_all(dir(), globals())
