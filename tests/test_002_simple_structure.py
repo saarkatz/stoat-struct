@@ -1,4 +1,5 @@
-from tests import run_all
+from struct import error
+from tests import raises, run_all
 from PyStructure.Structure import Structure
 from PyStructure.CStructure import Char, Short
 
@@ -22,9 +23,11 @@ def test_simple_structure():
     test2.c = Char()
     assert b'\x00' == test2.c
 
+    test3 = Char.unpack(b'\x04\x02')
+    assert b'\x04' == test3.pack()
 
-def test_structure_inheritance():
-    pass
+    with raises(error):
+        a = Short.unpack(b'\x02')
 
 
 if __name__ == '__main__':

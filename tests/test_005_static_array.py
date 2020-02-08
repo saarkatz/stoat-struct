@@ -22,7 +22,7 @@ def test_basic_static_array():
     assert b'l' == p2.name[3]
     assert b'e' == p2.name[-4]
     assert b'Hello' == p2.name
-
+    assert 5 == len(p2.name)
 
     with raises(IndexError):
         a = p2.name[5]
@@ -32,6 +32,7 @@ def test_basic_static_array():
 
     with raises(TypeError):
         p2.name = 'Hello'
+
 
 def test_nested_static_array():
     class String(Structure):

@@ -12,12 +12,13 @@ RESERVED_KEYWORDS = {'_data'}
 
 
 class BaseStructure(metaclass=MetaStructure):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, parent=None, **kwargs):
         self._data = OrderedDict()
+        self._parent = parent
         if kwargs.get('shallow', False):
             return
         for field, struct in self._structure.items():
-            self._data[field] = struct(*args, **kwargs)
+            self._data[field] = struct(*args, parent=self, **kwargs)
 
     def calcsize(self, *args, **kwargs):
         size = 0
@@ -42,11 +43,12 @@ class BaseStructure(metaclass=MetaStructure):
         return result
 
     @classmethod
-    def unpack_from(cls, buffer, offset, *args, **kwargs):
-        result = cls(*args, shallow=True, **kwargs)
+    def unpack_from(cls, buffer, offset, *args, parent=None, **kwargs):
+        result = cls(*args, shallow=True, parent=parent, **kwargs)
         for field, struct in result._structure.items():
             result._data[field], offset = \
-                struct.unpack_from(buffer, offset, *args, **kwargs)
+                struct.unpack_from(buffer, offset, *args, parent=result,
+                                   **kwargs)
 
         return result, offset
 
