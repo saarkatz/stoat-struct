@@ -35,6 +35,8 @@ retrieve its data. \
 **As compound structure** the structure simply
 contains other structures.
 
+TODO: This section needs to be validated
+
 Upon definition, a compound structure will define its structure, saved
 in the variable `_c_structure`. Any additional information required by
 the members of the compound structure but that is not part of its
@@ -66,6 +68,6 @@ mode.
 A **Type** is a Structure along with all the data required for its
 initialization.
 
-A **Factory** is an instance of the TypeFactory class the encapsulates
+A **Factory** is an instance of the TypeFactory class that encapsulates
 the structures and holds the data required to turn these structures to
 types.
