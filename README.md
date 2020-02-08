@@ -2,17 +2,17 @@
 ## How to Use PyStructure
 To create a structure, simply inherit from Structure
 ```python
-from old.py_structure import Structure, Int, Short, Char
+from py_structure import Structure, Int, Short, Char
 
 class Label(Structure):
-    id = Int+'LE'
+    id = Int+'<'
     name_size = Short
     name = Char['name_size']
 
 label = Label()
 label.id = 1234
 label.name_size = 7
-label.name = 'MyLabel'
+label.name = b'MyLabel'
 
 binary_data = label.pack()
 label2 = Label.unpack(binary_data)
