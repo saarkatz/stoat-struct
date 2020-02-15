@@ -12,8 +12,8 @@ class MetaStructure(ABCMeta):
         result = super().__new__(mcs, name, bases, dictionary)
         result._structure = OrderedDict()
 
-        # Collect all the instances of MetaStructure into the structure
-        # dictionary and set the variable into the correct property.
+        # Collect all the classes of MetaStructure and instances of
+        # BaseTypeFactory into the structure dictionary.
         for attribute, value in dictionary.items():
             if isinstance(value, (MetaStructure, BaseTypeFactory)):
                 result._structure[attribute] = value
