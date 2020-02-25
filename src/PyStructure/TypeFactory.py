@@ -19,7 +19,7 @@ class TypeFactory(BaseTypeFactory):
 
     def __getitem__(self, size):
         if issubclass(self.cls, Array):
-            self.args[0] = TypeFactory(Array, self.args[0], size)
+            self.args[0] = self.args[0][size]
             return self
         else:
             return TypeFactory(Array, self, size)
