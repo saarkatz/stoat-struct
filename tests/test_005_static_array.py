@@ -64,12 +64,22 @@ def test_static_multidimensional_array():
     class Test(Structure):
         matrix = Short[2][3]
 
+    class Test2(Structure):
+        cube = Short[2][3][1]
+
     test1 = Test()
     test1.matrix = [[1, 2, 3], [3, 4, 5]]
     assert b'\x01\x00\x02\x00\x03\x00\x03\x00\x04\x00\x05\x00' == test1.pack()
 
     test2 = Test.unpack(b'\x00\x01\x00\x02\x00\x03\x00\x04\x00\x08\x00\x0c')
     assert [[256, 512, 768], [1024, 2048, 3072]] == test2.matrix
+
+    test3 = Test2()
+    test3.cube = [[[1], [3], [5]], [[8], [10], [12]]]
+    assert b'\x01\x00\x03\x00\x05\x00\x08\x00\x0a\x00\x0c\x00' == test3.pack()
+
+    test4 = Test2.unpack(b'\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c')
+    assert [[[513], [1027], [1541]], [[2055], [2569], [3083]]] == test4.cube
 
 
 def test_parametrized_static_array():
