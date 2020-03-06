@@ -1,8 +1,9 @@
-# py-structure
-## How to Use PyStructure
+# stoat
+## How to Use Stoat
 To create a structure, simply inherit from Structure
 ```python
-from py_structure import Structure, Int, Short, Char
+from stoat import Structure
+from stoat.CStructure import Int, Short, Char
 
 class Label(Structure):
     id = Int+'<'
