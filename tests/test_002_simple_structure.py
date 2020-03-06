@@ -1,7 +1,7 @@
 from struct import error
 from tests import raises, run_all
-from stoat.Structure import Structure
-from stoat.CStructure import Char, Short
+from stoat.structure import Structure
+from stoat.cstructure import Char, Short
 
 
 def test_simple_structure():

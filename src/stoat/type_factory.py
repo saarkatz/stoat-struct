@@ -3,8 +3,8 @@
 The TypeFactory class is used to encapsulate all Structure classes for the
 purpose of containing the data required for the initialization of the structure.
 """
-from stoat.BaseTypeFactory import BaseTypeFactory
-from stoat.Array import Array
+from stoat.base_type_factory import BaseTypeFactory
+from stoat.array import Array
 
 
 class TypeFactory(BaseTypeFactory):

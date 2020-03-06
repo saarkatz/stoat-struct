@@ -5,7 +5,7 @@ the Array class.
 """
 from abc import abstractmethod
 from collections import OrderedDict
-from stoat.MetaStructure import MetaStructure
+from stoat.meta_structure import MetaStructure
 
 
 RESERVED_KEYWORDS = {'_data'}

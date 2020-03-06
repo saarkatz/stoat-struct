@@ -2,8 +2,8 @@
 ## How to Use Stoat
 To create a structure, simply inherit from Structure
 ```python
-from stoat import Structure
-from stoat.CStructure import Int, Short, Char
+from stoat.structure import Structure
+from stoat.cstructure import Int, Short, Char
 
 class Label(Structure):
     id = Int+'<'

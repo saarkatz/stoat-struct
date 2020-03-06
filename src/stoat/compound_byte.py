@@ -1,5 +1,5 @@
 from functools import partial
-from stoat.Structure import Structure
+from stoat.structure import Structure
 
 
 class TinyField:
