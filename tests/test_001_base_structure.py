@@ -1,5 +1,5 @@
 from tests import raises, run_all
-from PyStructure.CStructure import Char, Short
+from stoat.CStructure import Char, Short
 
 
 def test_char_structure():

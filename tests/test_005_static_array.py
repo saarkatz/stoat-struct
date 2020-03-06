@@ -1,6 +1,6 @@
 from tests import raises, run_all
-from PyStructure.Structure import Structure
-from PyStructure.CStructure import Char, Short
+from stoat.Structure import Structure
+from stoat.CStructure import Char, Short
 
 
 def test_basic_static_array():

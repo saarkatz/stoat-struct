@@ -2,7 +2,7 @@
 The Array class handles the containment of other structure classes into array
 types.
 """
-from PyStructure.BaseStructure import BaseStructure
+from stoat.BaseStructure import BaseStructure
 
 
 class ConstantSize:

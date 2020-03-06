@@ -1,9 +1,9 @@
 """
 The base class for all structures.
 """
-from PyStructure.BaseStructure import BaseStructure
-from PyStructure.TypeFactory import TypeFactory
-from PyStructure.Array import Array
+from stoat.BaseStructure import BaseStructure
+from stoat.TypeFactory import TypeFactory
+from stoat.Array import Array
 
 
 class Structure(BaseStructure):

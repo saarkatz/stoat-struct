@@ -1,5 +1,5 @@
 from functools import partial
-from PyStructure.Structure import Structure
+from stoat.Structure import Structure
 
 
 class TinyField:
