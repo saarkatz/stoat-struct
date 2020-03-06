@@ -32,16 +32,13 @@ class BaseCStructure(Structure):
         return self.data.value
 
     def _set(self, value, **kwargs):
-        error = None
         try:
             self.data.value = value
         except TypeError as e:
-            error = e
-        if error:
             try:
                 return super()._set(value, **kwargs)
             except TypeError:
-                raise error
+                raise e
 
     def __eq__(self, other):
         return (self.data.value == other
