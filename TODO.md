@@ -1,12 +1,12 @@
 # TODOs
 * Add label/grouping syntax
 ```python
-from stoat import structure
-from stoat.cstructure import Char, Short
+from stoat.core import Structure
+from stoat.types import Char, Short
 
 class MyStruct(Structure):
     # Option 1
-    class group1(Strcuture):
+    class group1(Structure):
         a = Char
         b = Short
         

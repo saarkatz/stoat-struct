@@ -1,6 +1,6 @@
 import ctypes
 import struct as Struct
-from stoat.structure import Structure
+from stoat.core import Structure
 
 
 class BaseCStructure(Structure):

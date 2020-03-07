@@ -1,5 +1,5 @@
 from tests import raises, run_all
-from stoat.cstructure import Char, Short
+from stoat.types import Char, Short
 
 
 def test_char_structure():

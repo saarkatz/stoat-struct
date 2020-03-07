@@ -2,7 +2,7 @@
 The Array class handles the containment of other structure classes into array
 types.
 """
-from stoat.base_structure import BaseStructure
+from stoat.core.base_structure import BaseStructure
 
 
 class ConstantSize:

@@ -4,7 +4,7 @@ Here the functionality over the structure class is implemented.
 """
 from abc import ABCMeta
 from collections import OrderedDict
-from stoat.base_type_factory import BaseTypeFactory
+from stoat.core.base_type_factory import BaseTypeFactory
 
 
 class MetaStructure(ABCMeta):

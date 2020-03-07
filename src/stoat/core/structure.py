@@ -1,9 +1,9 @@
 """
 The base class for all structures.
 """
-from stoat.base_structure import BaseStructure
-from stoat.type_factory import TypeFactory
-from stoat.array import Array
+from stoat.core.base_structure import BaseStructure
+from stoat.core.type_factory import TypeFactory
+from stoat.core.array import Array
 
 
 class Structure(BaseStructure):
