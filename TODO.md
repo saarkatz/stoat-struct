@@ -1,8 +1,9 @@
 # TODOs
 * Add label/grouping syntax
 ```python
+```python
 from stoat.core import Structure
-from stoat.types import Char, Short
+from stoat.stypes import Char, Short
 
 class MyStruct(Structure):
     # Option 1

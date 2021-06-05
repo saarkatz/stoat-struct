@@ -1,6 +1,6 @@
 from tests import raises, run_all
 from stoat.core import Structure
-from stoat.types import CompoundByte
+from stoat.stypes import CompoundByte
 
 
 def test_compound_byte():

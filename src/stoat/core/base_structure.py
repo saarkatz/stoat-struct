@@ -5,57 +5,57 @@ the Array class.
 """
 from abc import abstractmethod
 from collections import OrderedDict
-from stoat.core.meta_structure import MetaStructure
+from .meta_structure import MetaStructure
 
 
-RESERVED_KEYWORDS = {'_data'}
+RESERVED_KEYWORDS = {'_data', '_structure', '_parent'}
 
 
 class BaseStructure(metaclass=MetaStructure):
-    def __init__(self, *args, parent=None, **kwargs):
-        self._data = OrderedDict()
-        self._parent = parent
-        if kwargs.get('shallow', False):
-            return
-        for field, struct in self._structure.items():
-            self._data[field] = struct(*args, parent=self, **kwargs)
+    _config = {}
 
-    def calcsize(self, *args, **kwargs):
+    def __init__(self, _parent=None):
+        self._data = OrderedDict()
+        self._parent = _parent
+        # if kwargs.get('shallow', False):
+        #     return
+        for field, struct in self._structure.items():
+            self._data[field] = struct(_parent=self)
+
+    def calcsize(self):
         size = 0
         for data_field in self._data.values():
-            size += data_field.calcsize(*args, **kwargs)
+            size += data_field.calcsize()
         return size
 
-    def pack(self, *args, **kwargs):
+    def pack(self):
         size = self.calcsize()
         bin_state = bytearray(size)
-        self.pack_into(bin_state, 0, *args, **kwargs)
+        self.pack_into(bin_state, 0)
         return bytes(bin_state)
 
-    def pack_into(self, buffer, offset, *args, **kwargs):
+    def pack_into(self, buffer, offset):
         for data_field in self._data.values():
-            offset = data_field.pack_into(buffer, offset, *args, **kwargs)
+            offset = data_field.pack_into(buffer, offset)
         return offset
 
     @classmethod
-    def unpack(cls, buffer, *args, **kwargs):
-        result, _ = cls.unpack_from(buffer, 0, *args, **kwargs)
+    def unpack(cls, buffer):
+        result, _ = cls.unpack_from(buffer, 0)
         return result
 
     @classmethod
-    def unpack_from(cls, buffer, offset, *args, parent=None, **kwargs):
-        result = cls(*args, shallow=True, parent=parent, **kwargs)
+    def unpack_from(cls, buffer, offset, _parent=None):
+        result = cls(_parent=_parent)
         for field, struct in result._structure.items():
             result._data[field], offset = \
-                struct.unpack_from(buffer, offset, *args, parent=result,
-                                   **kwargs)
-
+                struct.unpack_from(buffer, offset, _parent=result)
         return result, offset
 
-    def _get(self, **kwargs):
+    def _get(self):
         return self
 
-    def _set(self, value, **kwargs):
+    def _set(self, value):
         if isinstance(value, self.__class__):
             return value
         else:
@@ -65,11 +65,6 @@ class BaseStructure(metaclass=MetaStructure):
     @classmethod
     @abstractmethod
     def array(cls, size):
-        pass
-
-    @classmethod
-    @abstractmethod
-    def param(cls, parameter):
         pass
 
     @classmethod

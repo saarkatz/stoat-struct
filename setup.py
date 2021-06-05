@@ -5,10 +5,10 @@ with open("README.md", "r") as fh:
 
 setup(
     name="stoat",
-    version="0.0.1",
+    version="0.0.2",
     author="Saar Katz",
     author_email="kats.saar@gmail.com",
-    description="A package for declarative definition of binary structures",
+    description="Python package for declarative definition of binary structures",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/saarkatz/stoat-struct",

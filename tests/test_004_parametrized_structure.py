@@ -1,12 +1,12 @@
 from tests import raises, run_all
 from stoat.core import Structure
-from stoat.types import Char, Short
+from stoat.stypes import Char, Short, Config
 
 
 def test_parametrize_bases():
     class Test(Structure):
-        s1 = Short+'<'
-        s2 = Short+'>'
+        s1 = Short < Config.Endianness.Little
+        s2 = Short < Config.Endianness.Big
 
     test1 = Test()
     test1.s1 = 25185
@@ -24,8 +24,8 @@ def test_parametrize_nested():
         s = Short
 
     class Test(Structure):
-        i1 = Internal+'>'
-        i2 = Internal+'<'
+        i1 = Internal < Config.Endianness.Big
+        i2 = Internal < Config.Endianness.Little
 
     test1 = Test()
     test1.i1.c = b'a'

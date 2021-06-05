@@ -1,14 +1,16 @@
 # stoat
 ## How to Use Stoat
 To create a structure, simply inherit from Structure
+
 ```python
 from stoat.core import Structure
-from stoat.types import Int, Short, Char
+from stoat.stypes import Int, Short, Char, Config
 
 class Label(Structure):
-    id = Int+'<'
+    id = Int < Config.Endianness.Little
     name_size = Short
-    name = Char['name_size']
+    # name = Char['name_size']  # Not Yet implemented
+    name = Char[7]
 
 label = Label()
 label.id = 1234
@@ -17,4 +19,10 @@ label.name = b'MyLabel'
 
 binary_data = label.pack()
 label2 = Label.unpack(binary_data)
+```
+
+## Test
+At the project directory run the command:
+```shell script
+coverage run --source src -m pytest
 ```
