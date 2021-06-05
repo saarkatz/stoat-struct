@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name="stoat",
-    version="0.0.2",
+    version="0.0.3",
     author="Saar Katz",
     author_email="kats.saar@gmail.com",
     description="Python package for declarative definition of binary structures",
