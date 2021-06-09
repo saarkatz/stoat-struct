@@ -9,8 +9,7 @@ from stoat.stypes import Int, Short, Char, Config
 class Label(Structure):
     id = Int < Config.Endianness.Little
     name_size = Short
-    # name = Char['name_size']  # Not Yet implemented
-    name = Char[7]
+    name = Char[name_size]
 
 label = Label()
 label.id = 1234
