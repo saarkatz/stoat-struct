@@ -1,4 +1,4 @@
-from ._meta import Meta
+from .meta import Meta
 
 
 class Base(metaclass=Meta):
