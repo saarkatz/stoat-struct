@@ -54,9 +54,12 @@ class Meta(ABCMeta):
 
         # Collect all the members
         for key, item in constructor.fields.items():
+            # Unwrap and record any context item found
             if isinstance(item, Context):
                 context[key] = item.context
                 item = item.item
+
+            # Wrap any structure items with an accessor
             if isinstance(item, mcs):
                 struct[key] = item
                 dictionary[key] = Accessor(key, item, data_vars_func)
@@ -80,7 +83,7 @@ class Meta(ABCMeta):
     def __auto_decorator__(cls):
         return cls.configure(cls.config)
 
-    # Fix isinstance  for Structure classes
+    # Fix isinstance for Structure classes
     def __instancecheck__(self, instance):
         return type.__instancecheck__(
             registry.get_base(self.__blueprint__.uuid), instance
