@@ -1,3 +1,3 @@
 from .context import Context
-from .reference import Reference, ForwardRef, ConstRef
+from .reference import ForwardRef
 from .request import Request
