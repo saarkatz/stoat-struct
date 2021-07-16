@@ -1,6 +1,6 @@
 from tests import run_all
-from stoat.core import Structure
-from stoat.stypes import Char, Short
+from stoat.core.structure import Structure
+from stoat.types.ctypes import Char, Short
 
 
 def test_structure_in_structure():

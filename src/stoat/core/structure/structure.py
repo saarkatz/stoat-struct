@@ -1,4 +1,5 @@
-from ._base import Base
+from .base import Base
+from .context import Context, ConstRef
 
 
 class Structure(Base):
@@ -7,4 +8,9 @@ class Structure(Base):
     Inherit Structure to implement a  custom structure, either based or
     not based on other structures.
     """
-    pass
+    @classmethod
+    def array(cls, size):
+        if isinstance(size, int):
+            size = ConstRef(size)
+
+        return Context(cls, [size])

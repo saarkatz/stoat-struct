@@ -1,36 +1,40 @@
 from tests import raises, run_all
-from stoat.stypes import Char, Short
+from stoat.types.ctypes import Char, Short
 
 
 def test_char_structure():
     c = Char()
-    c._set(b'@')
+    c.setter(b'@')
     assert b'@' == c.pack()
-    assert b'@' == c._get()
+    assert '@' == c.getter()
 
-    c._set(bytearray(b'a'))
+    c.setter(bytearray(b'a'))
     assert b'a' == c.pack()
-    assert b'a' == c._get()
+    assert 'a' == c.getter()
 
-    c._set(70)
+    c.setter(70)
     assert b'F' == c.pack()
-    assert b'F' == c._get()
+    assert 'F' == c.getter()
 
-    with raises(TypeError):
-        c._set('@')
+    c.setter('H')
+    assert b'H' == c.pack()
+    assert 'H' == c.getter()
+
+    # with raises(TypeError):
+    #     c.setter('@')
 
 
 def test_short_structure():
     s = Short()
-    s._set(14)
+    s.setter(14)
     assert b'\x0e\x00' == s.pack()
-    assert 14 == s._get()
+    assert 14 == s.getter()
 
-    s._set(-1)
+    s.setter(-1)
     assert b'\xff\xff' == s.pack()
-    assert -1 == s._get()
+    assert -1 == s.getter()
 
-    s._set(32768)
+    s.setter(32768)
     assert b'\x00\x80' == s.pack()
 
 

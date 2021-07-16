@@ -1,7 +1,7 @@
 from struct import error
 from tests import raises, run_all
-from stoat.core import Structure
-from stoat.stypes import Char, Short
+from stoat.core.structure import Structure
+from stoat.types.ctypes import Char, Short
 
 
 def test_simple_structure():
@@ -15,13 +15,13 @@ def test_simple_structure():
     assert b'@#$' == test1.pack()
 
     test2 = Test.unpack(b'%^&')
-    assert b'%' == test2.c
+    assert '%' == test2.c
     assert 9822 == test2.s
 
     assert 3 == test2.calcsize()
 
     test2.c = Char()
-    assert b'\x00' == test2.c
+    assert '\x00' == test2.c
 
     test3 = Char.unpack(b'\x04\x02')
     assert b'\x04' == test3.pack()

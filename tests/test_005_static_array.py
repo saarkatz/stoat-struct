@@ -1,6 +1,6 @@
 from tests import raises, run_all
-from stoat.core import Structure
-from stoat.stypes import Char, Short, Config
+from stoat.core.structure import Structure
+from stoat.types.ctypes import Char, Short
 
 
 def test_basic_static_array():
@@ -84,8 +84,8 @@ def test_static_multidimensional_array():
 
 def test_parametrized_static_array():
     class Test(Structure):
-        s1 = Short[2] < Config.Endianness.Big
-        s2 = Short[1][2] < Config.Endianness.Big
+        s1 = Short[2] < Short.config.Endianness.Big
+        s2 = Short[1][2] < Short.config.Endianness.Big
 
     test1 = Test()
     test1.s1 = [1, 2]

@@ -3,11 +3,11 @@
 To create a structure, simply inherit from Structure
 
 ```python
-from stoat.core import Structure
-from stoat.stypes import Int, Short, Char, Config
+from stoat.core.structure import Structure
+from stoat.types.ctypes import Int, Short, Char
 
 class Label(Structure):
-    id = Int < Config.Endianness.Little
+    id = Int < Int.config.Endianness.Little
     name_size = Short
     name = Char[name_size]
 
@@ -23,5 +23,5 @@ label2 = Label.unpack(binary_data)
 ## Test
 At the project directory run the command:
 ```shell script
-coverage run --source src -m pytest
+coverage run --source src -m pytest --ignore=old
 ```

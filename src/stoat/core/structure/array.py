@@ -1,4 +1,4 @@
-from ._base import Base
+from .base import Base
 
 
 class Array(Base):

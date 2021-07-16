@@ -5,6 +5,7 @@ This is so that make variations of a type that do not require a redefinition
 while still keeping each different configuration its own type for correct type
 information.
 """
+from .builder import Factory
 from .conditions.condition import Condition
 
 
@@ -99,3 +100,6 @@ class Config:
         config.dictionary.update(other.dictionary)
         assert config.validate(config.dictionary)
         return config
+
+    def builder(self):
+        return Factory(self)
