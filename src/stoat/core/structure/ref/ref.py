@@ -16,9 +16,12 @@ class Ref:
     def _private(self, item):
         return self.getattr('_' + item)
 
-    def getattr(self, item):
+    def validate(self, item):
         assert item_pattern.fullmatch(item), 'An item must be a valid python attribute name'
-        return Ref(initial_path=self._path + [item])
+
+    def getattr(self, item):
+        self.validate(item)
+        return self.__class__(initial_path=self._path + [item])
 
     def __repr__(self):
-        return f'Ref({", ".join(self._path)})'
+        return f'{self.__class__.name}({", ".join(self._path)})'
