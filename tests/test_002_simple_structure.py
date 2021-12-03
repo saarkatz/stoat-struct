@@ -1,6 +1,6 @@
 from struct import error
 
-from utils import raises, run_all
+from .utils import raises, run_all
 from stoat.core.structure import Structure
 from stoat.types.ctypes import Char, Int16
 
