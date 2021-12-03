@@ -1,42 +1,41 @@
-from tests import raises, run_all
+from utils import raises, run_all
 from stoat.core.structure import Structure
-from stoat.types.ctypes import Char, Short
+from stoat.types.ctypes import Char, Int16
+from stoat.types.ctypes.params import Endianness
+from stoat.core.utils import params
 
 
-def test_parametrize_bases():
+def test_parametrize_structure():
     class Test(Structure):
-        s1 = Short < Short.config.Endianness.Little
-        s2 = Short < Short.config.Endianness.Big
+        c: Char
+        s: Int16 = params(endianness=param.endianness)
 
-    test1 = Test()
-    test1.s1 = 25185
-    test1.s2 = 25185
-    assert b'abba' == test1.pack()
+    test1 = Test(endianness=Endianness.Big)
+    test1.c = 'a'
+    test1.s = 17238
+    assert b'aCV' == test1.pack()
 
-    test2 = Test.unpack(b'BABA')
-    assert 16706 == test2.s1
-    assert 16961 == test2.s2
+    test2 = Test(endianness=Endianness.Little)
+    test1.c = 'b'
+    test2.s = 17238
+    assert b'bVC' == test2.pack()
 
 
-def test_parametrize_nested():
-    class Internal(Structure):
-        c = Char
-        s = Short
+def test_parametrize_nested_structure():
+    class Inner(Structure):
+        c: Char
+        s: Int16 = params(endianness=param.endi)
 
     class Test(Structure):
-        i1 = Internal < Short.config.Endianness.Big
-        i2 = Internal < Short.config.Endianness.Little
+        i1: Inner = params(endi=param.paparam)
+        i2: Inner = params(endi=Endianness.Big)
 
-    test1 = Test()
-    test1.i1.c = b'a'
-    test1.i1.s = 17238
-    test1.i2.c = b'b'
-    test1.i2.s = 17238
-    assert b'aCVbVC' == test1.pack()
-
-    test2 = Test.unpack(b'qWErWE')
-    assert 22341 == test2.i1.s
-    assert 17751 == test2.i2.s
+    test = Test(paparam=Endianness.Little)
+    test.i1.c = 'a'
+    test.i1.s = 17238
+    test.i1.c = 'b'
+    test.i1.s = 17238
+    assert b'aVCbCV' == test.pack()
 
 
 if __name__ == '__main__':

@@ -1,5 +1,5 @@
-from tests import raises, run_all
-from stoat.types.ctypes import Char, Short
+from utils import raises, run_all
+from stoat.types.ctypes import Char, Int16
 
 
 def test_char_structure():
@@ -20,22 +20,28 @@ def test_char_structure():
     assert b'H' == c.pack()
     assert 'H' == c.getter()
 
-    # with raises(TypeError):
-    #     c.setter('@')
+    # with raises(OverflowError):
+    #     c.setter(256)
+
+    with raises(TypeError):
+        c.setter(256)
 
 
 def test_short_structure():
-    s = Short()
+    s = Int16()
     s.setter(14)
-    assert b'\x0e\x00' == s.pack()
+    assert b'\x00\x0e' == s.pack()
     assert 14 == s.getter()
 
     s.setter(-1)
     assert b'\xff\xff' == s.pack()
     assert -1 == s.getter()
 
-    s.setter(32768)
-    assert b'\x00\x80' == s.pack()
+    s.setter(-32768)
+    assert b'\x80\x00' == s.pack()
+
+    # with raises(OverflowError):
+    #     s.setter(32768)
 
 
 if __name__ == '__main__':
