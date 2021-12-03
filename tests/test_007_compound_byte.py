@@ -1,58 +1,63 @@
-from tests import raises, run_all
+from utils import raises, run_all
 from stoat.core.structure import Structure
-from stoat.types import CompoundByte
+from stoat.types import Bits
+from stoat.types.ctypes import Char
 
 
 def test_compound_byte():
     class Flags(Structure):
-        flags = CompoundByte + (1, 1, 1, 1, 1, 1, 1, 1)
+        a: Bits = params(bits=1, skip=1)
+        b: Bits = params(bits=2)
+        c: Bits = params(bits=3)
+        ch: Char
 
-    f = Flags()
+    f1 = Flags()
+    f1.a = 1
+    f1.b = 3
+    f1.c = 7
+    f1.ch = b'a'
+    assert b'\x7ea' == f1.pack()
 
-    assert not any(f.flags)
+    f2 = Flags.unpack(b'\xaab')  # Here the last two bits will be ignored
+    assert 0 == f2.a
+    assert 2 == f2.b
+    assert 5 == f2.c
+    assert 'b' == f2.ch
+    assert b'\x2a8' == f2.pack()
 
-    f.flags[0] = True
-    f.flags[2] = True
-    f.flags[4] = True
-    f.flags[6] = True
-    f.flags[7] = True
+    with raises(OverflowError):
+        f1.a = 2
 
-    assert not f.flags[3]
-    assert f.flags[4]
-    assert b'\xab' == f.pack()
+    with raises(OverflowError):
+        f1.b = 4
 
-    f.flags = [not flag for flag in f.flags]
-    assert b'T' == f.pack()
 
-    f2 = Flags.unpack(b'\xff')
-    assert all(f2.flags)
-
+def test_cross_bytes():
     class Test(Structure):
-        cb1 = CompoundByte + (1, 2, 3)
-        cb2 = CompoundByte + (1, 2, 3, 2)
-        cb3 = CompoundByte + [4]
+        a: Bits = params(skip=4, bits=8)
 
-    t = Test()
-    t.cb1[0] = 1
-    t.cb1[1] = 3
-    t.cb1[2] = 7
-    t.cb1[3] = 3
-    t.cb2 = b'\xda'
-    t.cb3 = 129
+    t1 = Test.unpack(b'\x09\xa0')
+    t2 = Test.unpack(b'\xf9\xaf')
 
-    assert b'\xFF\xda\x81' == t.pack()
+    assert t1.a == t2.a
+    assert t1.pack() == t2.pack()
 
-    with raises(TypeError):
-        t.cb1 = [None, None, None, None]
 
-    with raises(ValueError):
-        t.cb1 = [3, 3, 7, 3]
+def test_bits_array():
+    class Test(Structure):
+        a: Bits[4] = params(skip=1, bits=2)
 
-    with raises(AssertionError):
-        t.cb1 = [1, 2, 3]
+    t = Test.unpack(b'e2a5')
 
-    with raises(TypeError):
-        t.cb1 = 1.373
+    assert 3 == t.a[0]
+    assert 0 == t.a[1]
+    assert 1 == t.a[2]
+    assert 2 == t.a[3]
+    assert 2 == t.a[-1]
+    assert b'60a0' == t.pack()
+
+    with raises(IndexError):
+        t.a[4] = 1
 
 
 if __name__ == '__main__':
