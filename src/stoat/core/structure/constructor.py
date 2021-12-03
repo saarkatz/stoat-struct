@@ -6,7 +6,7 @@ from .ref import This
 class Constructor:
     def __init__(self, name):
         self.special = {'this': This()}
-        self.fields = OrderedDict({__name__: name})
+        self.fields = OrderedDict({'__name__': name})
 
     def __getitem__(self, item):
         if item in self.special:
