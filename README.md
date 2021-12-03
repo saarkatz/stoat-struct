@@ -4,12 +4,14 @@ To create a structure, simply inherit from Structure
 
 ```python
 from stoat.core.structure import Structure
-from stoat.types.ctypes import Int, Short, Char
+from stoat.core.utils import params
+from stoat.types.ctypes import Int32, Int16, Char
+from stoat.types.ctypes.params import Endianness
 
 class Label(Structure):
-    id = Int < Int.config.Endianness.Little
-    name_size = Short
-    name = Char[name_size]
+    id: Int32 = params(endianness=Endianness.Little)
+    name_size: Int16
+    name: Char[this.name_size]
 
 label = Label()
 label.id = 1234
