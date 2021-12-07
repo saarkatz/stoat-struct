@@ -2,12 +2,16 @@ from abc import abstractmethod
 import struct
 
 from ...core.structure import Structure
+from .params import Endianness
 
 
 class BaseCStructure(Structure):
-    def __init__(self):
+    def __init__(self, default=0, params=None):
         super().__init__()
-        self.data = self.type()
+        self.endianness = params.get('endianness', Endianness.Big) if params else Endianness.Big
+
+        self.data = self.type(default)
+        self._fmt = self.endianness.value + self.fmtchar
 
     @property
     @abstractmethod
@@ -16,8 +20,12 @@ class BaseCStructure(Structure):
 
     @property
     @abstractmethod
-    def fmt(self):
+    def fmtchar(self):
         pass
+
+    @property
+    def fmt(self):
+        return self._fmt
 
     def calcsize(self):
         size = super().calcsize()
@@ -29,8 +37,8 @@ class BaseCStructure(Structure):
         return offset + struct.calcsize(self.fmt)
 
     @classmethod
-    def unpack_from(cls, buffer, offset):
-        result, offset = super().unpack_from(buffer, offset)
+    def unpack_from(cls, buffer, offset, kwargs=None):
+        result, offset = super().unpack_from(buffer, offset, kwargs)
         value = struct.unpack_from(result.fmt, buffer, offset)[0]
         result.setter(value)
         return result, offset + struct.calcsize(result.fmt)

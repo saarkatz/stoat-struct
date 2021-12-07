@@ -18,11 +18,15 @@ class Base(metaclass=Meta):
     This class is required to prevent circular import between Structure
     and Array.
     """
-    def __init__(self):
-        self.__instance__ = Instance(data=OrderedDict())
+    def __init__(self, **kwargs):
+        params = kwargs.get('params', {})  # TODO: default behaviour should be to pass the params to any requiring child
+        shape, metadata = self.__blueprint__
+        instance = Instance(data=OrderedDict())
 
-        for key, struct in self.__blueprint__.shape.items():
-            self.__instance__.data[key] = struct[0]()
+        for key, struct in shape.items():
+            instance.data[key] = struct(**metadata[key])
+
+        self.__instance__ = instance
 
     def calcsize(self):
         size = 0
@@ -47,11 +51,13 @@ class Base(metaclass=Meta):
         return result
 
     @classmethod
-    def unpack_from(cls, buffer, offset):
-        result = cls()
-        for key, struct in result.__blueprint__.shape.items():
+    def unpack_from(cls, buffer, offset, kwargs=None):
+        result = cls(**kwargs) if kwargs else cls()
+        shape, metadata = result.__blueprint__
+
+        for key, struct in shape.items():
             result.__instance__.data[key], offset = (
-                struct[0].unpack_from(buffer, offset)
+                struct.unpack_from(buffer, offset, metadata[key])
             )
         return result, offset
 
