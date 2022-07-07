@@ -58,5 +58,25 @@ def test_parametrize_bases_default_params():
             c: Char = params(a=1), params(a=2)
 
 
+def test_nested_parametrized():
+    class Internal1(Structure):
+        s: Int16 = default(24930)
+
+    class Internal2(Structure):
+        s: Int16 = params(endianness=Endianness.Little)
+
+    class MidLayer(Structure):
+        i1: Internal1
+        i2: Internal2 = default({'s': 25699})
+        s: Int16 = default(17219)
+
+    class Test(Structure):
+        ml: MidLayer
+        s: Int16
+
+    t = Test({'ml': {'s': 25958}, 's': 26472})
+    assert b'abcdefgh' == t.pack()
+
+
 if __name__ == '__main__':
     run_all(dir(), globals())
