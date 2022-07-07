@@ -33,8 +33,8 @@ def test_parametrize_nested_structure():
     test = Test(paparam=Endianness.Little)
     test.i1.c = 'a'
     test.i1.s = 17238
-    test.i1.c = 'b'
-    test.i1.s = 17238
+    test.i2.c = 'b'
+    test.i2.s = 17238
     assert b'aVCbCV' == test.pack()
 
 
