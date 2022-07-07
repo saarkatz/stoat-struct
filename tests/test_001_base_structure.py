@@ -3,8 +3,7 @@ from stoat.types.ctypes import Char, Int16
 
 
 def test_char_structure():
-    c = Char()
-    c.setter(b'@')
+    c = Char(b'@')
     assert b'@' == c.pack()
     assert '@' == c.getter()
 
@@ -28,8 +27,7 @@ def test_char_structure():
 
 
 def test_short_structure():
-    s = Int16()
-    s.setter(14)
+    s = Int16(14)
     assert b'\x00\x0e' == s.pack()
     assert 14 == s.getter()
 

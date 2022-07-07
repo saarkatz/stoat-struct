@@ -28,12 +28,14 @@ def test_structure_in_structure():
     assert b'!~@#%$&^*' == test1.pack()
 
     c = Char.unpack(b'a')
-    cs = CharStruct()
-    cs.c1 = b'b'
+    cs = CharStruct({'c1': b'b'})
     cs.c2 = b'c'
     test1.c = c
     test1.cs = cs
     assert b'!~bc%$&^a' == test1.pack()
+
+    test2 = Test({'s': 20823, 'cs': {'c1': c, 'c2': b'r'}, 'ss': {'s1': 21625, 's2': 30025}, 'c': b'O'})
+    assert b'QWarTyuIO' == test2.pack()
 
 
 if __name__ == '__main__':

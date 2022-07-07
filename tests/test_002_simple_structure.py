@@ -11,21 +11,33 @@ def test_simple_structure():
         s: Int16
 
     test1 = Test()
-    test1.c = b'@'
-    test1.s = 9251
-    assert b'@$#' == test1.pack()
+    test1.c = b'*'
+    test1.s = 10281
+    assert b'*()' == test1.pack()
+    assert 3 == test1.calcsize()
 
-    test2 = Test.unpack(b'%&^')
-    assert '%' == test2.c
-    assert 9822 == test2.s
+    test2 = Test({'c': b'@', 's': 9251})
+    assert b'@$#' == test2.pack()
 
-    assert 3 == test2.calcsize()
+    c = Char(101)
+    test3 = Test({'c': c, 's': 1})
+    assert b'e\x00\x01' == test3.pack()
 
-    test2.c = Char()
-    assert '\x00' == test2.c
+    test4 = Test(test3)
+    assert b'e\x00\x01' == test4.pack()
+    test4.s = 2
+    assert b'e\x00\x02' == test4.pack()
+    assert b'e\x00\x01' == test3.pack()
 
-    test3 = Char.unpack(b'\x04\x02')
-    assert b'\x04' == test3.pack()
+    test5 = Test.unpack(b'%&^')
+    assert '%' == test5.c
+    assert 9822 == test5.s
+
+    test5.c = Char(1)
+    assert '\x01' == test5.c
+
+    test6 = Char.unpack(b'\x04\x02')
+    assert b'\x04' == test6.pack()
 
     with raises(error):
         a = Int16.unpack(b'\x02')
