@@ -18,12 +18,20 @@ class Base(metaclass=Meta):
     This class is required to prevent circular import between Structure
     and Array.
     """
-    def __init__(self, **kwargs):
+    def __init__(self, default=None, **kwargs):
         params = kwargs.get('params', {})  # TODO: default behaviour should be to pass the params to any requiring child
         shape, metadata = self.__blueprint__
         instance = Instance(data=OrderedDict())
 
+        value = {}
+        if isinstance(default, self.__class__):
+            value = default.__instance__.data
+        elif isinstance(default, dict):
+            value = default
+
         for key, struct in shape.items():
+            if key in value:
+                metadata[key]['default'] = value[key]
             instance.data[key] = struct(**metadata[key])
 
         self.__instance__ = instance

@@ -10,6 +10,8 @@ class BaseCStructure(Structure):
         super().__init__()
         self.endianness = params.get('endianness', Endianness.Big) if params else Endianness.Big
 
+        if isinstance(default, self.__class__):
+            default = default.data.value
         self.data = self.type(default)
         self._fmt = self.endianness.value + self.fmtchar
 

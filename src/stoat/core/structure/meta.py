@@ -49,7 +49,7 @@ class Meta(ABCMeta):
 
         # Set the fields of the structure to properties
         for field, struct in shape.items():
-            dictionary[field] = Accessor(shape[field], field)
+            dictionary[field] = Accessor(field, shape[field])
 
         dictionary['__annotations__'] = annotations
         dictionary['__blueprint__'] = Blueprint(shape=shape, metadata=metadata)
@@ -63,6 +63,8 @@ class Meta(ABCMeta):
         if isinstance(data, (tuple, list)):
             for d in data:
                 if d.dtype in metadata:
+                    if d.once:
+                        raise Exception(f"{d.dtype} can only appear once")
                     metadata[d.dtype].merge(d)
                 else:
                     metadata[d.dtype] = d

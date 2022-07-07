@@ -4,7 +4,7 @@ class Accessor(property):
     The Accessor is used by the Meta metaclass to generate accessors for the
     structure fields inside a new strcuture class.
     """
-    def __init__(self, item, key):
+    def __init__(self, key, item):
         super().__init__(
             lambda s: item.getter(s.__instance__.data[key]),
             lambda s, v: item.setter(s.__instance__.data[key], v),

@@ -1,0 +1,2 @@
+class Bits:
+    pass

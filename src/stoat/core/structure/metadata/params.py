@@ -9,5 +9,5 @@ class Params(Metadata):
         assert self.dtype == other.dtype
         for key, value in other.value.items():
             if key in self.value:
-                raise Exception()  # TODO: Which exception
+                raise Exception()  # TODO: Which exception or maybe warning
             self.value[key] = value
